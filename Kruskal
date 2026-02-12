@@ -1,0 +1,104 @@
+
+#include <iostream>
+using namespace std;
+
+const int MAXN = 10;
+const int MAX_EDGES = 20;
+
+struct Edge {
+    int u, v, w;
+};
+
+struct DSU {
+    int parent[MAXN];
+    int rankv[MAXN];
+    
+    DSU(int n) {
+        for (int i = 0; i < n; i++) {
+            parent[i] = i;
+            rankv[i] = 0;
+        }
+    }
+    
+    int find(int v) {
+        if (v == parent[v]) return v;
+        return parent[v] = find(parent[v]);
+    }
+    
+    bool unite(int a, int b) {
+        a = find(a); b = find(b);
+        if (a == b) return false;
+        if (rankv[a] < rankv[b]) swap(a, b);
+        parent[b] = a;
+        if (rankv[a] == rankv[b]) rankv[a]++;
+        return true;
+    }
+};
+ 
+Edge manual_edges[MAX_EDGES] = {
+    {0, 1, 10}, {0, 2, 6}, {0, 3, 5},
+    {1, 3, 15}, {2, 3, 4}
+};
+
+// ✅ РУЧНАЯ сортировка пузырьком (bubble sort)
+void bubble_sort(Edge* edges, int m) {
+    for (int i = 0; i < m - 1; i++) {
+        for (int j = 0; j < m - i - 1; j++) {
+            if (edges[j].w > edges[j + 1].w) {
+                // меняем местами
+                Edge temp = edges[j];
+                edges[j] = edges[j + 1];
+                edges[j + 1] = temp;
+            }
+        }
+    }
+}
+
+void kruskalMST(int n, Edge* edges, int m, int* mst_cost, int* mst_edges) {
+    DSU dsu(n);
+    
+    // копируем рёбра во временный массив
+    Edge temp[MAX_EDGES];
+    for (int i = 0; i < m; i++) {
+        temp[i].u = edges[i].u;
+        temp[i].v = edges[i].v;
+        temp[i].w = edges[i].w;
+    }
+    
+    // ✅ СОРИТИРУЕМ РУЧНОЙ сортировкой
+    bubble_sort(temp, m);
+    
+    int totalCost = 0;
+    int edgeCount = 0;
+    
+    for (int i = 0; i < m; i++) {
+        if (dsu.unite(temp[i].u, temp[i].v)) {
+            totalCost += temp[i].w;
+            if (edgeCount < n-1) {
+                mst_edges[edgeCount * 2] = temp[i].u;
+                mst_edges[edgeCount * 2 + 1] = temp[i].v;
+                mst_cost[edgeCount] = temp[i].w;
+                edgeCount++;
+            }
+        }
+    }
+    
+    cout << "Kruskal MST cost = " << totalCost << "\n";
+}
+
+int main() {
+    int n = 4;
+    int m = 5;
+
+    int mst_cost[MAXN];
+    int mst_edges[MAX_EDGES * 2];
+
+    kruskalMST(n, manual_edges, m, mst_cost, mst_edges);
+
+    cout << "MST рёбра:\n";
+    for (int i = 0; i < n-1; i++) {
+        int u = mst_edges[i*2];
+        int v = mst_edges[i*2+1];
+        cout << u << " - " << v << " (w=" << mst_cost[i] << ")\n";
+    }
+}
