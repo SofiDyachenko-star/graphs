@@ -1,0 +1,76 @@
+#include <iostream>
+#include <queue>
+#include <climits>
+using namespace std;
+
+const int INF = INT_MAX / 2;
+const int MAXN = 100;
+
+int** create_graph(int n) {
+    int** graph = new int*[n];
+    for (int i = 0; i < n; i++) {
+        graph[i] = new int[n];
+        for (int j = 0; j < n; j++) graph[i][j] = INF;
+        graph[i][i] = 0;
+    }
+    return graph;
+}
+
+void manual_graph(int** graph, int n) {
+    graph[0][1] = 2; graph[1][0] = 2;
+    graph[0][2] = 5; graph[2][0] = 5;
+    graph[1][2] = 1; graph[2][1] = 1;
+    graph[1][3] = 3; graph[3][1] = 3;
+    graph[2][4] = 2; graph[4][2] = 2;
+    graph[3][4] = 4; graph[4][3] = 4;
+}
+
+void dijkstra(int n, int** graph, int start, int* dist) {
+    for (int i = 0; i < n; i++) dist[i] = INF;
+    dist[start] = 0;
+
+    bool* used = new bool[n];
+    for (int i = 0; i < n; i++) used[i] = false;
+
+    priority_queue<pair<int,int>, array<pair<int,int>, MAXN>,
+                   greater<pair<int,int>>> pq;
+    pq.push({0, start});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (used[u]) continue;
+        used[u] = true;
+
+        for (int v = 0; v < n; v++) {
+            if (graph[u][v] < INF && dist[v] > dist[u] + graph[u][v]) {
+                dist[v] = dist[u] + graph[u][v];
+                pq.push({dist[v], v});
+            }
+        }
+    }
+    delete[] used;
+}
+
+void delete_graph(int** graph, int n) {
+    for (int i = 0; i < n; i++) delete[] graph[i];
+    delete[] graph;
+}
+
+int main() {
+    int n = 5;
+    int** graph = create_graph(n);
+    manual_graph(graph, n);
+
+    int* dist = new int[n];
+    dijkstra(n, graph, 0, dist);
+
+    cout << "Dijkstra от вершины 0:\n";
+    for (int i = 0; i < n; i++) {
+        cout << "dist[" << i << "] = ";
+        cout << (dist[i] >= INF ? "INF" : to_string(dist[i]));
+        cout << "\n";
+    }
+
+    delete[] dist;
+    delete_graph(graph, n);
+}
