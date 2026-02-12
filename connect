@@ -1,0 +1,91 @@
+#include <iostream>
+using namespace std;
+
+const int MAXN = 10;
+const int MAX_EDGES = 20;
+
+int adj[MAXN][MAXN];  // матрица смежности
+int adjT[MAXN][MAXN]; // транспонированная
+
+void manual_graph(int n) {
+    // обнуляем
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++) {
+            adj[i][j] = 0;
+            adjT[i][j] = 0;
+        }
+    
+    // РУЧНОЙ ОРИЕНТИРОВАННЫЙ ГРАФ (цикл)
+    adj[0][1] = 1;
+    adj[1][2] = 1;
+    adj[2][3] = 1;
+    adj[3][0] = 1;
+    
+    // строим транспонированный
+    for (int u = 0; u < n; u++)
+        for (int v = 0; v < n; v++)
+            if (adj[u][v])
+                adjT[v][u] = 1;
+}
+
+bool visited[MAXN];
+
+void dfs1(int v, int n, int* order, int& order_idx) {
+    visited[v] = true;
+    for (int to = 0; to < n; to++) {
+        if (adj[v][to] && !visited[to])
+            dfs1(to, n, order, order_idx);
+    }
+    order[order_idx++] = v;
+}
+
+void dfs2(int v, int n) {
+    visited[v] = true;
+    for (int to = 0; to < n; to++) {
+        if (adjT[v][to] && !visited[to])
+            dfs2(to, n);
+    }
+}
+
+bool is_strongly_connected(int n) {
+    int order[MAXN];
+    int order_idx = 0;
+    
+    // первый DFS
+    for (int i = 0; i < n; i++) visited[i] = false;
+    for (int i = 0; i < n; i++) {
+        if (!visited[i])
+            dfs1(i, n, order, order_idx);
+    }
+    
+    // второй DFS по транспонированному
+    for (int i = 0; i < n; i++) visited[i] = false;
+    int compCount = 0;
+    
+    for (int i = n - 1; i >= 0; i--) {
+        int v = order[i];
+        if (!visited[v]) {
+            dfs2(v, n);
+            compCount++;
+        }
+    }
+    
+    return compCount == 1;
+}
+
+int main() {
+    int n = 4;
+    manual_graph(n);
+
+    cout << "Ориентированный граф:\n";
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++)
+            cout << adj[i][j] << " ";
+        cout << "\n";
+    }
+    
+    if (is_strongly_connected(n))
+        cout << "\nГраф СИЛЬНО связен\n";
+    else
+        cout << "\nГраф НЕ сильно связен\n";
+}
