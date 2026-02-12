@@ -1,0 +1,108 @@
+
+#include <iostream>
+#include <climits>
+using namespace std;
+
+const int INF = INT_MAX / 2;
+const int MAXN = 100;
+
+int** create_graph(int n) {
+    int** graph = new int*[n];
+    for (int i = 0; i < n; i++) {
+        graph[i] = new int[n];
+        for (int j = 0; j < n; j++) graph[i][j] = INF;
+        graph[i][i] = 0;
+    }
+    return graph;
+}
+
+void manual_graph(int** graph, int n) {
+    graph[0][1] = 2; graph[1][0] = 2;
+    graph[0][3] = 6; graph[3][0] = 6;
+    graph[1][2] = 3; graph[2][1] = 3;
+    graph[1][3] = 8; graph[3][1] = 8;
+    graph[1][4] = 5; graph[4][1] = 5;
+    graph[2][4] = 7; graph[4][2] = 7;
+    graph[3][4] = 9; graph[4][3] = 9;
+}
+
+void primMST(int n, int** graph, int* parent, int* cost) {
+    int* key = new int[n];      // минимальный вес ребра до вершины
+    bool* inMST = new bool[n];  // включена в MST?
+
+    // инициализация
+    for (int i = 0; i < n; i++) {
+        key[i] = INF;
+        parent[i] = -1;
+        inMST[i] = false;
+        cost[i] = 0;
+    }
+    key[0] = 0;  // старт с вершины 0
+
+    // n раз выбираем вершину с минимальным key среди НЕ включённых
+    for (int count = 0; count < n; count++) {
+        // ✅ НАХОДИМ вершину u с минимальным key среди !inMST
+        int min_key = INF;
+        int u = -1;
+        
+        for (int v = 0; v < n; v++) {
+            if (!inMST[v] && key[v] < min_key) {
+                min_key = key[v];
+                u = v;
+            }
+        }
+        
+        if (u == -1) break;  // нет доступных вершин
+        
+        // ✅ включаем u в MST
+        inMST[u] = true;
+        
+        // ✅ РЕЛАКСАЦИЯ соседей u
+        for (int v = 0; v < n; v++) {
+            // если есть ребро u-v И v не в MST И вес меньше текущего key[v]
+            if (graph[u][v] < INF && !inMST[v] && graph[u][v] < key[v]) {
+                key[v] = graph[u][v];    // улучшаем key
+                parent[v] = u;           // запоминаем родителя
+            }
+        }
+    }
+
+    // считаем общую стоимость
+    int totalCost = 0;
+    for (int v = 0; v < n; v++) {
+        if (parent[v] != -1) {
+            totalCost += key[v];
+            cost[v] = key[v];
+        }
+    }
+    cout << "Total MST cost = " << totalCost << "\n";
+
+    delete[] key;
+    delete[] inMST;
+}
+
+void delete_graph(int** graph, int n) {
+    for (int i = 0; i < n; i++) delete[] graph[i];
+    delete[] graph;
+}
+
+int main() {
+    int n = 5;
+    int** graph = create_graph(n);
+    manual_graph(graph, n);
+
+    int* parent = new int[n];
+    int* cost = new int[n];
+
+    primMST(n, graph, parent, cost);
+
+    cout << "MST рёбра (u,v):\n";
+    for (int v = 0; v < n; v++) {
+        if (parent[v] != -1)
+            cout << parent[v] << " - " << v << " (w=" << cost[v] << ")\n";
+    }
+
+    delete[] parent;
+    delete[] cost;
+    delete_graph(graph, n);
+}
